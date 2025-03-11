@@ -1,189 +1,142 @@
 """
-title: Todoist API Tool
-description: A comprehensive tool to call todoist API
+title: Todoist
+description: A tool to call Todoist API and interact with tasks
 author: Martin Yankov
 author_url: https://github.com/Lutherwaves
 github: https://github.com/Lutherwaves/open-webui-tools
 funding_url: https://github.com/open-webui
-version: 0.0.2
+version: 0.0.1
 license: Apache 2.0
 requirements: todoist-api-python
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from todoist_api_python.api_async import TodoistAPIAsync
-from todoist_api_python.models import Task
-from typing import Optional, Callable, Awaitable, Any
+from typing import Callable, Awaitable, Any
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
 
 class Tools:
-    """
-    A class to provide various tools for Todoist API interactions.
-    """
-
     class Valves(BaseModel):
-        TODOIST_API_KEY: str = Field(
-            ..., description="The user's Todoist API key"
-        )
+        TODOIST_API_KEY: str = ""
 
-    def __init__(self, api_key: str):
-        self.citation = True
-        self.valves = self.Valves(TODOIST_API_KEY=api_key)
-        self.api = TodoistAPIAsync(self.valves.TODOIST_API_KEY)
+    def __init__(self):
+        self.valves = self.Valves()
 
     async def list_tasks(
         self,
         __user__: dict = {},
         __event_emitter__: Callable[[Any], Awaitable[None]] = None,
-    ) -> list[Task]:
+    ) -> str:
         """
         Lists all tasks in your Todoist account.
 
         :return: A list of Task objects.
         """
-        if __event_emitter__:
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {"description": "Fetching tasks", "done": False},
+            }
+        )
+        api = TodoistAPIAsync(self.valves.TODOIST_API_KEY)
+        try:
+            tasks = await api.get_tasks()
             await __event_emitter__(
                 {
                     "type": "status",
-                    "data": {"description": "Fetching tasks", "done": False},
+                    "data": {"description": "Tasks fetched", "done": True},
                 }
             )
-        try:
-            tasks = await self.api.get_tasks()
-            if __event_emitter__:
-                await __event_emitter__(
-                    {
-                        "type": "status",
-                        "data": {"description": "Tasks fetched", "done": True},
-                    }
-                )
-            return tasks
+            return f"Tasks: {tasks}"
         except Exception as error:
-            error_message = f"Error getting tasks: {error}"
-            logging.error(error_message)
-            if __event_emitter__:
-                await __event_emitter__(
-                    {
-                        "type": "status",
-                        "data": {"description": error_message, "done": True},
-                    }
-                )
-            raise
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {"description": f"Error: {error}", "done": True},
+                }
+            )
+            return [f"Error getting tasks: {error}"]
 
     async def get_task(
         self,
-        task_id: int,
+        task_id: str,
         __user__: dict = {},
         __event_emitter__: Callable[[Any], Awaitable[None]] = None,
-    ) -> Task:
+    ) -> dict:
         """
         Retrieves a specific task by its ID.
 
         :param task_id: The ID of the task to retrieve.
-        :return: A Task object.
+        :return: The task object if found, otherwise an error message.
         """
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {"description": f"Fetching task {task_id}", "done": False},
+            }
+        )
+        api = TodoistAPIAsync(self.valves.TODOIST_API_KEY)
         try:
-            task = await self.api.get_task(task_id)
-            return task
-        except Exception as error:
-            error_message = f"Error getting task: {error}"
-            logging.error(error_message)
-            raise
-
-    async def add_task(
-        self,
-        content: str,
-        project_id: Optional[int] = None,
-        __user__: dict = {},
-        __event_emitter__: Callable[[Any], Awaitable[None]] = None,
-    ) -> Task:
-        """
-        Adds a new task to Todoist.
-
-        :param content: The content of the task.
-        :param project_id: (Optional) The ID of the project to add the task to.
-        :return: The newly created Task object.
-        """
-        try:
-            task = await self.api.add_task(content, project_id=project_id)
-            return task
-        except Exception as error:
-            error_message = f"Error adding task: {error}"
-            logging.error(error_message)
-            raise
-
-    async def update_task(
-        self,
-        task_id: int,
-        content: Optional[str] = None,
-        due_string: Optional[str] = None,
-        __user__: dict = {},
-        __event_emitter__: Callable[[Any], Awaitable[None]] = None,
-    ) -> bool:
-        """
-        Updates an existing task.
-
-        :param task_id: The ID of the task to update.
-        :param content: (Optional) The new content for the task.
-        :param due_string: (Optional) The new due date for the task (e.g., "tomorrow").
-        :return: True if the update was successful.
-        """
-        try:
-            success = await self.api.update_task(
-                task_id, content=content, due_string=due_string
+            task = await api.get_task(task_id)
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {"description": f"Task {task_id} fetched", "done": True},
+                }
             )
-            return success
+            return task
         except Exception as error:
-            error_message = f"Error updating task: {error}"
-            logging.error(error_message)
-            raise
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {"description": f"Error: {error}", "done": True},
+                }
+            )
+            return {"error": f"Failed to get task {task_id}: {error}"}
 
-    async def close_task(
+    async def complete_task(
         self,
-        task_id: int,
+        task_id: str,
         __user__: dict = {},
         __event_emitter__: Callable[[Any], Awaitable[None]] = None,
     ) -> bool:
         """
-        Closes a task (marks it as completed).
+        Marks a task as completed.
 
-        :param task_id: The ID of the task to close.
-        :return: True if the task was closed successfully.
+        :param task_id: The ID of the task to complete.
+        :return: True if successful, otherwise False.
         """
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {"description": f"Completing task {task_id}", "done": False},
+            }
+        )
+        api = TodoistAPIAsync(self.valves.TODOIST_API_KEY)
         try:
-            success = await self.api.close_task(task_id)
-            return success
+            result = await api.close_task(task_id)
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {"description": f"Task {task_id} completed", "done": True},
+                }
+            )
+            return result
         except Exception as error:
-            error_message = f"Error closing task: {error}"
-            logging.error(error_message)
-            raise
-
-    async def reopen_task(
-        self,
-        task_id: int,
-        __user__: dict = {},
-        __event_emitter__: Callable[[Any], Awaitable[None]] = None,
-    ) -> bool:
-        """
-        Reopens a closed task.
-
-        :param task_id: The ID of the task to reopen.
-        :return: True if the task was reopened successfully.
-        """
-        try:
-            success = await self.api.reopen_task(task_id)
-            return success
-        except Exception as error:
-            error_message = f"Error reopening task: {error}"
-            logging.error(error_message)
-            raise
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {"description": f"Error: {error}", "done": True},
+                }
+            )
+            return False
 
     async def delete_task(
         self,
-        task_id: int,
+        task_id: str,
         __user__: dict = {},
         __event_emitter__: Callable[[Any], Awaitable[None]] = None,
     ) -> bool:
@@ -191,12 +144,75 @@ class Tools:
         Deletes a task.
 
         :param task_id: The ID of the task to delete.
-        :return: True if the task was deleted successfully.
+        :return: True if successful, otherwise False.
         """
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {"description": f"Deleting task {task_id}", "done": False},
+            }
+        )
+        api = TodoistAPIAsync(self.valves.TODOIST_API_KEY)
         try:
-            success = await self.api.delete_task(task_id)
-            return success
+            result = await api.delete_task(task_id)
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {"description": f"Task {task_id} deleted", "done": True},
+                }
+            )
+            return result
         except Exception as error:
-            error_message = f"Error deleting task: {error}"
-            logging.error(error_message)
-            raise
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {"description": f"Error: {error}", "done": True},
+                }
+            )
+            return False
+
+    async def edit_task(
+        self,
+        task_id: str,
+        content: str = None,
+        due_string: str = None,
+        __user__: dict = {},
+        __event_emitter__: Callable[[Any], Awaitable[None]] = None,
+    ) -> bool:
+        """
+        Edits a task's content or due date.
+
+        :param task_id: The ID of the task to edit.
+        :param content: New content for the task.
+        :param due_string: New due date string for the task.
+        :return: True if successful, otherwise False.
+        """
+        await __event_emitter__(
+            {
+                "type": "status",
+                "data": {"description": f"Editing task {task_id}", "done": False},
+            }
+        )
+        api = TodoistAPIAsync(self.valves.TODOIST_API_KEY)
+        try:
+            data = {}
+            if content:
+                data["content"] = content
+            if due_string:
+                data["due_string"] = due_string
+            result = await api.update_task(task_id, data)
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {"description": f"Task {task_id} updated", "done": True},
+                }
+            )
+            return result
+        except Exception as error:
+            await __event_emitter__(
+                {
+                    "type": "status",
+                    "data": {"description": f"Error: {error}", "done": True},
+                }
+            )
+            return False
