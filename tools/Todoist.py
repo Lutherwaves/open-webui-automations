@@ -1,6 +1,6 @@
 """
-title: Todoist API Tool
-description: A comprehensive tool to call todoist API
+title: Todoist
+description: A tool to call Todoist API and interact with tasks
 author: Martin Yankov
 author_url: https://github.com/Lutherwaves
 github: https://github.com/Lutherwaves/open-webui-tools
