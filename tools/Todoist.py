@@ -332,7 +332,8 @@ class Tools:
             busy_time = 0
 
             for task in tasks:
-                if task.get("due", {}).get("date") == today.strftime("%Y-%m-%d"):
+                if task.get("due", {}).get(
+                        "date") == today.strftime("%Y-%m-%d"):
                     if task.get("due", {}).get("time"):
                         start_time = datetime.strptime(
                             task["due"]["time"], "%H:%M"
@@ -395,7 +396,8 @@ class Tools:
             project_ratios = {}
 
             for task in tasks:
-                if task.get("due", {}).get("date") == today.strftime("%Y-%m-%d"):
+                if task.get("due", {}).get(
+                        "date") == today.strftime("%Y-%m-%d"):
                     if task.get("due", {}).get("time"):
                         start_time = datetime.strptime(
                             task["due"]["time"], "%H:%M"
