@@ -5,7 +5,7 @@ author: Martin Yankov
 author_url: https://github.com/Lutherwaves
 github: https://github.com/Lutherwaves/open-webui-tools
 funding_url: https://github.com/open-webui
-version: 0.0.2
+version: 0.0.3
 license: Apache 2.0
 requirements: todoist-api-python
 """
