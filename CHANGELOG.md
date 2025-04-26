@@ -1,3 +1,7 @@
+# [1.0.0](https://github.com/Lutherwaves/open-webui-tools/compare/v0.0.3...v1.0.0) (2025-04-26)
+
+# [1.0.0](https://github.com/Lutherwaves/open-webui-tools/compare/v0.0.3...v1.0.0) (2025-04-26)
+
 ## [0.0.3](https://github.com/Lutherwaves/open-webui-tools/compare/v0.0.2...v0.0.3) (2025-03-20)
 
 
