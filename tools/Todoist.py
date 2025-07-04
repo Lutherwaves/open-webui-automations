@@ -1,6 +1,6 @@
 """
-title: Todoist
-description: A tool to call Todoist API and list tasks based on filters
+title: Vikunja
+description: A tool to call Vikunja API and list tasks based on filters
 author: Martin Yankov
 author_url: https://github.com/Lutherwaves
 github: https://github.com/Lutherwaves/open-webui-tools
@@ -17,12 +17,12 @@ from datetime import timedelta
 
 logging.basicConfig(level=logging.DEBUG)
 
-TODOIST_SYNC_URL = "https://api.todoist.com/api/v1/sync"
+VIKUNJA_SYNC_URL = "https://<vikunja-domain>/api/v1/projects/1/tasks"
 
 
 class Tools:
     class Valves(BaseModel):
-        TODOIST_API_KEY: str = ""
+        VIKUNJA_API_KEY: str = ""
 
     def __init__(self):
         self.valves = self.Valves()
@@ -30,27 +30,24 @@ class Tools:
     async def _sync_api(
         self,
         commands: List[dict] = None,
-        resource_types: List[str] = None,
         sync_token: str = "*",
     ):
         headers = {
-            "Authorization": f"Bearer {self.valves.TODOIST_API_KEY}",
-            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": f"Bearer {self.valves.VIKUNJA_API_KEY}",
+            "Content-Type": "application/json",
         }
         data = {}
-        if resource_types:
-            data["resource_types"] = str(resource_types).replace("'", '"')
         if commands:
             data["commands"] = str(commands).replace("'", '"')
         data["sync_token"] = sync_token
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                TODOIST_SYNC_URL, headers=headers, data=data
+                VIKUNJA_SYNC_URL, headers=headers, data=data
             ) as resp:
                 if resp.status != 200:
                     raise Exception(
-                        f"Todoist API error: {resp.status} {await resp.text()}"
+                        f"Vikunja API error: {resp.status} {await resp.text()}"
                     )
                 return await resp.json()
 
@@ -61,9 +58,9 @@ class Tools:
         __event_emitter__: Callable[[Any], Awaitable[None]] = None,
     ) -> str:
         """
-        List tasks from Todoist and find tasks based on provided filters.
+        List tasks from Vikunja and find tasks based on provided filters.
 
-        This method retrieves tasks using the Todoist API and supports filtering by date,
+        This method retrieves tasks using the Vikunja API and supports filtering by date,
         priority, labels, and project name. Dates can be specific (e.g., "2025-04-24"),
         relative ("today", "tomorrow", "this week"), or natural language ("next Monday").
 
