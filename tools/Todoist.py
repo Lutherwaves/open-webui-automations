@@ -100,7 +100,7 @@ class Tools:
 
         # Fetch all items (tasks)
         try:
-            sync_data = await self._sync_api(resource_types=["items"])
+            sync_data = await self._sync_api()
             tasks = sync_data.get("items", [])
 
             # Filter tasks by due date (supports "today", "tomorrow", "this week", etc.)
@@ -108,10 +108,10 @@ class Tools:
             filtered_tasks = []
             now = datetime.now()
             for task in tasks:
-                due = task.get("due", {})
+                due = task.get("done", {})
                 if not due:
                     continue
-                due_str = due.get("date")
+                due_str = due.get("due_date")
                 if not due_str:
                     continue
                 # Handle relative dates
