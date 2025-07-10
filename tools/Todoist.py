@@ -3,7 +3,7 @@ title: Todoist
 description: A tool to call Todoist API and list tasks based on filters
 author: Martin Yankov
 author_url: https://github.com/Lutherwaves
-github: https://github.com/Lutherwaves/open-webui-tools
+github: https://github.com/Lutherwaves/open-webui-automations
 funding_url: https://github.com/open-webui
 version: 1.0.0
 """
